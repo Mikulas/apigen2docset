@@ -100,12 +100,20 @@ class BuildCommand extends Command
 			$crawler = new Crawler(file_get_contents($file->getRealPath()));
 			$name = $crawler->filterXPath('//title')->text();
 
-			$match = String::match($name, '~(?P<type>[^\s]+) (?P<name>[^\s]+)\s+|~');
+			$match = String::match($name, '~^(?P<type>[^\s]+) (?P<name>[^\s]+)\s+\|~');
 			$type = strToLower($match['type']);
 
 			if ($type === 'class' && String::match($match['name'], '~Exception$~'))
 			{
 				$type = 'exception';
+			}
+
+			if ($type === 'subpackage')
+			{
+				$type = 'package';
+				$m = String::match($name, '~ \| Package (?P<package>[^\s]+)\s+\|~');
+				$match['name'] = "{$m['package']}\\{$match['name']}";
+				echo $match['name'] . "\n";
 			}
 
 			if (in_array($type, ['class', 'exception', 'interface']))
