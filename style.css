@@ -1,0 +1,7 @@
+#left, #splitter, #search, #navigation, #footer {
+	display: none;
+}
+
+#right {
+	margin-left: 0;
+}
