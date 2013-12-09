@@ -1,0 +1,16 @@
+{
+    "name": "mikulas/apigen2docset",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Mikulas",
+            "email": "rullaf@gmail.com"
+        }
+    ],
+    "require": {
+        "nette/nette": "dev-master",
+        "symfony/console": "~2.3",
+        "symfony/finder": "~2.2",
+        "symfony/dom-crawler": "~2.4.0"
+    }
+}

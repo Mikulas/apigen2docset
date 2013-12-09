@@ -1,0 +1,16 @@
+<?php
+
+use Symfony\Component\Console\Application;
+
+require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/BuildCommand.php';
+require __DIR__ . '/DocsetCommand.php';
+
+
+
+$app = new Application();
+$app->setName('Apigen to Docset');
+$app->setVersion('1.0');
+$app->add(new BuildCommand);
+$app->add(new DocsetCommand);
+$app->run();
