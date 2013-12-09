@@ -3,9 +3,9 @@
 use Symfony\Component\Console\Application;
 
 require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/DocParser.php';
 require __DIR__ . '/BuildCommand.php';
 require __DIR__ . '/DocsetCommand.php';
-
 
 
 $app = new Application();

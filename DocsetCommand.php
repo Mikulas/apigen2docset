@@ -22,7 +22,7 @@ class DocsetCommand extends Command
 	{
 		$this
 			->setName('docset')
-			->setDescription('Create docset')
+			->setDescription('Create docset from ApiGen html')
 			->addArgument(
 				'docDir',
 				InputArgument::REQUIRED,
@@ -60,14 +60,38 @@ class DocsetCommand extends Command
 		;
 	}
 
+	private function writePlist(InputInterface $input, $docDir, $plistPath)
+	{
+		$parser = new DocParser($docDir);
+
+		$template = new FileTemplate(__DIR__ . '/Info.plist');
+		$template->registerFilter(new Nette\Latte\Engine);
+		$template->id = $parser->id;
+		$template->name = $input->getOption('name') ?: $parser->name;
+		$template->keyword = $input->getOption('keyword') ?: 'php';
+		$template->index = $input->getOption('index') ?: FALSE;
+
+		ob_start();
+		$template->render();
+		file_put_contents($plistPath, ob_get_clean());
+	}
+
+	private function fixCss($output)
+	{
+		$css = "$output/Contents/Resources/Documents/resources/style.css";
+		$new = __DIR__ . '/style.css';
+		file_put_contents($css, file_get_contents($new), FILE_APPEND);
+	}
+
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		$docDir = $input->getArgument('docDir');
 		
 		$build = $this->getApplication()->find('build');
 		$args = [
-			'path' => $docDir,
-			'output' => self::TMP_NAME,
+			'command' => 'build',
+			'docDir' => $docDir,
+			'--output' => self::TMP_NAME,
 		];
 		$build->run(new ArrayInput($args), $output);
 
@@ -84,23 +108,9 @@ class DocsetCommand extends Command
 			return FALSE;
 		}
 
-		$index = "$docDir/index.html";
-		$crawler = new Crawler(file_get_contents($index));
-		$meta = $crawler->filterXPath('//*[@id="content"]/h1')->first();
-		$name = $meta->text();
-		$id = String::webalize($name);
+		rename(self::TMP_NAME, "$path/Contents/Resources/docSet.dsidx"); // TODO check errors
 
-		rename(self::TMP_NAME, "$path/Contents/Resources/docSet.dsidx");
-
-		$template = new FileTemplate(__DIR__ . '/Info.plist');
-		$template->registerFilter(new Nette\Latte\Engine);
-		$template->id = $id;
-		$template->name = $input->getOption('name') ?: $name;
-		$template->keyword = $input->getOption('keyword') ?: 'php';
-		$template->index = $input->getOption('index') ?: FALSE;
-		ob_start();
-		$template->render();
-		file_put_contents("$path/Contents/Info.plist", ob_get_clean());
+		$this->writePlist($input, $docDir, "$path/Contents/Info.plist");
 
 		if ($icon = $input->getOption('icon'))
 		{
@@ -121,8 +131,9 @@ class DocsetCommand extends Command
 		}
 		foreach ($finder->files()->depth(0)->in("$docDir/resources") as $file)
 		{
-			copy($file->getRealpath(), "$path/Contents/Resources/Documents/resources" . $file->getBasename());
+			copy($file->getRealpath(), "$path/Contents/Resources/Documents/resources/" . $file->getBasename());
 		}
+		$this->fixCss($path);
 
 		$output->writeln("Done");
 	}
