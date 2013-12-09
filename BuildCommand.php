@@ -113,7 +113,6 @@ class BuildCommand extends Command
 				$type = 'package';
 				$m = String::match($name, '~ \| Package (?P<package>[^\s]+)\s+\|~');
 				$match['name'] = "{$m['package']}\\{$match['name']}";
-				echo $match['name'] . "\n";
 			}
 
 			if (in_array($type, ['class', 'exception', 'interface']))
@@ -145,6 +144,23 @@ class BuildCommand extends Command
 					$this->insert('constant', $match['name'] . "::$name", $file->getBasename() . "#$id");
 				}
 
+			}
+
+			$infoDom = $crawler->filterXPath('//*[@id="content"]/div[@class="info"]/a');
+			foreach ($infoDom as $node)
+			{
+				if (String::match($node->getAttribute('href'), '~\bevents?\b~i'))
+				{
+					// insert again, into Events
+					$this->insert('event', $match['name'], $file->getBasename());
+				}
+			}
+
+			$descDomCode = $crawler->filterXPath('//*[@id="content"]/div[@class="description"]/pre');
+			if ($descDomCode->count())
+			{
+				// insert again, into Samples
+				$this->insert('sample', $match['name'], $file->getBasename());
 			}
 
 			$this->insert($type, $match['name'], $file->getBasename());
